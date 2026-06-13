@@ -1,14 +1,13 @@
-"""Shared agent tools: PDF text → structured data for the catalog.
+"""Shared agent tools: pitch deck PDF text → structured data for A2UI.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CUSTOMIZATION SEAM #3 — Swap demo data
 See HACKATHON.md §3 for the full recipe.
 
-In the pdf-analyst demo the uploaded PDF *is* the data. To point the demo
-at a different document type, edit the extraction prompt + the TypedDict
-shapes below so they describe what your documents yield (invoice → totals
-and line items; paper → findings and figures; report → KPIs and trend),
-then reword the agent system prompts in fixed_agent.py / dynamic_agent.py.
+FundLens AI treats the uploaded startup pitch deck as the data source. Keep
+this extractor conservative: use only information found in the PDF, write
+"Not stated" for missing facts, and never fabricate traction, revenue,
+valuation, customers, or funding asks.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 from __future__ import annotations
@@ -73,73 +72,109 @@ def _strip_to_json(text: str) -> str:
 
 @tool
 def extract_dashboard_data(pdf_text: str, document_name: str) -> str:
-    """Parse the supplied PDF text and return a JSON payload shaped for the
-    fixed dashboard schema.
+    """Parse a startup pitch deck PDF into the FundLens dashboard shape.
 
     The PDF text comes from the user's most recent chat attachment.
 
     Returns a JSON string with this exact shape:
       {
-        "eyebrow":  "...short ALL-CAPS context, e.g. 'Q1 2025 · SALES REPORT'",
-        "title":    "...short headline title (<= 8 words)",
-        "subtitle": "...one-sentence summary",
-        "kpis":     [{label,value,delta,caption}, x4],
-        "trend":    [{label,value}, x6-12],
-        "share":    [{label,value}, x3-5],
-        "rows":     [{name,category,value,delta}, x5-8]
+        "eyebrow": "INVESTMENT SNAPSHOT · <company>",
+        "title": "<company name>",
+        "subtitle": "one-line investment summary",
+        "kpis": [{label,value,delta,caption}, x4],
+        "trend": [{label,value}, x3-8],
+        "share": [{label,value}, x3-5],
+        "rows": [{name,category,value,delta}, x4-8],
+        "questions": [{name,category,value,delta}, x4-8],
+        "team_signals": "short neutral founder/team summary"
       }
-    If a field genuinely doesn't appear in the PDF, return a sensible "n/a"
-    string for KPI values and an empty list for series. Never invent numbers.
+    Missing deck fields must be the literal string "Not stated". Never invent
+    numbers, traction, revenue, valuation, customers, or funding asks.
     """
     sys = (
-        "You are a careful data extractor. Read the PDF text and return ONLY "
-        "a JSON object with the exact shape requested. No prose, no markdown "
-        "fences. Use only numbers that appear in the document. "
-        "If exact values are unclear, use 'n/a' for KPI values."
+        "You are a careful venture analyst and data extractor for FundLens AI. "
+        "Read the pitch deck PDF text and return ONLY a JSON object with the "
+        "exact shape requested. No prose, no markdown fences. Use only "
+        "information found in the PDF. If information is missing, write "
+        "'Not stated'. Do not infer numbers that are not present. Do not "
+        "produce fake traction, revenue, valuation, customers, or funding ask. "
+        "Use neutral investment language such as 'evidence suggests', "
+        "'not stated', and 'requires diligence'."
     )
     user = f"""\
 Document name: {document_name}
 
-PDF text (truncated to first 30k chars):
+Pitch deck PDF text (truncated to first 30k chars):
 \"\"\"
 {pdf_text[:30000]}
 \"\"\"
 
+Extract only what the deck states. Look for:
+- company name, problem, solution, product, target customer
+- sector / industry, startup stage, market size, market opportunity
+- business model, pricing, go-to-market, partnerships
+- traction, revenue, growth, customer/user metrics
+- competitors, competitive advantage
+- founder/team strengths
+- funding ask, use of funds
+- risks, missing information, investor questions
+
 Return JSON with this shape:
 {{
-  "eyebrow": "string (short, ALL CAPS)",
-  "title": "string (<=8 words)",
-  "subtitle": "string (one sentence)",
-  "kpis": [{{"label": "...", "value": "...", "delta": "+X%|-X%|", "caption": "..."}}, ...],   // exactly 4
-  "trend": [{{"label": "Jan", "value": 12.3}}, ...],                                          // 6-12 points
-  "share": [{{"label": "Region", "value": 42}}, ...],                                          // 3-5 slices
-  "rows": [{{"name": "...", "category": "...", "value": "...", "delta": "+X%"}}, ...]         // 5-8 rows
+  "eyebrow": "INVESTMENT SNAPSHOT · SECTOR OR STAGE",
+  "title": "Company name or Not stated",
+  "subtitle": "One-line summary using only stated facts; include Not stated where needed",
+  "kpis": [
+    {{"label": "Stage", "value": "...", "delta": "", "caption": "Sector / industry: ..."}},
+    {{"label": "Funding ask", "value": "...", "delta": "", "caption": "Use of funds: ..."}},
+    {{"label": "Business model", "value": "...", "delta": "", "caption": "Pricing / buyer: ..."}},
+    {{"label": "Readiness", "value": "High|Medium|Low|Not stated", "delta": "", "caption": "Only score if enough evidence exists; otherwise Not stated"}}
+  ],
+  "trend": [{{"label": "Traction metric", "value": 0}}, ...],
+  "share": [{{"label": "Market / segment", "value": 0}}, ...],
+  "rows": [{{"name": "Risk", "category": "Market|Product|GTM|Financial|Team|Legal|Other", "value": "Evidence or Not stated", "delta": "High|Medium|Low|Not stated"}}, ...],
+  "questions": [{{"name": "Due diligence question", "category": "Priority", "value": "Why it matters", "delta": "High|Medium|Low"}}, ...],
+  "team_signals": "Founder / team strengths, or Not stated"
 }}
+
+Guidance:
+- trend should represent traction signals only when numerical metrics are present. If no traction numbers exist, return one point: {{"label":"Not stated","value":0}}.
+- share should represent market opportunity only when numerical market/segment values are present. If no market numbers exist, return one point: {{"label":"Not stated","value":0}}.
+- rows are the Risk Register. Include missing critical information as a risk.
+- questions are investor due diligence questions by priority.
 Return ONLY the JSON object.
 """
     out = _extractor().invoke([("system", sys), ("user", user)])
     raw = _strip_to_json(out.content if isinstance(out.content, str) else str(out.content))
-    # Validate. fall back to a tiny placeholder if the LLM produced invalid JSON.
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
         data = {
-            "eyebrow": "DOCUMENT",
-            "title": document_name or "Untitled",
-            "subtitle": "Could not extract structured data from this document.",
+            "eyebrow": "INVESTMENT SNAPSHOT",
+            "title": document_name or "Not stated",
+            "subtitle": "Could not extract structured pitch deck data.",
             "kpis": [
-                {"label": "Status", "value": "n/a", "delta": "", "caption": "extraction failed"}
-            ] * 4,
-            "trend": [],
-            "share": [],
-            "rows": [],
+                {"label": "Stage", "value": "Not stated", "delta": "", "caption": "Sector / industry: Not stated"},
+                {"label": "Funding ask", "value": "Not stated", "delta": "", "caption": "Use of funds: Not stated"},
+                {"label": "Business model", "value": "Not stated", "delta": "", "caption": "Pricing / buyer: Not stated"},
+                {"label": "Readiness", "value": "Not stated", "delta": "", "caption": "Requires diligence"},
+            ],
+            "trend": [{"label": "Not stated", "value": 0}],
+            "share": [{"label": "Not stated", "value": 0}],
+            "rows": [
+                {"name": "Structured extraction", "category": "Other", "value": "Not stated", "delta": "Not stated"}
+            ],
+            "questions": [
+                {"name": "What evidence supports the investment case?", "category": "Priority", "value": "Extraction failed", "delta": "High"}
+            ],
+            "team_signals": "Not stated",
         }
     return json.dumps(data)
 
 
 @tool
 def query_pdf(pdf_text: str, question: str) -> str:
-    """Answer a user question about the PDF and return ONLY structured data
+    """Answer a user question about the pitch deck and return structured data
     that the dynamic agent can then render as a UI surface.
 
     Returns a JSON object: { "shape_hint": "stat|trend|share|table|text",
@@ -148,19 +183,23 @@ def query_pdf(pdf_text: str, question: str) -> str:
     The shape_hint is advice. The agent makes the final layout decision.
     """
     sys = (
-        "You are an analyst answering a question about a PDF. Return ONLY a "
-        "JSON object describing the answer as structured data. No prose, no "
-        "markdown fences. Pick the most natural shape for the answer:\n"
-        "- 'stat'  → { value, delta?, caption? }  for single-metric answers\n"
-        "- 'trend' → [{label, value}, ...]        for time-series\n"
-        "- 'share' → [{label, value}, ...]        for breakdowns / shares\n"
-        "- 'table' → { columns:[{key,label}], rows:[{...}] }  for lists\n"
-        "- 'text'  → string                       for narrative answers\n"
+        "You are a venture analyst answering investor questions about a startup "
+        "pitch deck. Return ONLY a JSON object describing the answer as "
+        "structured data. No prose, no markdown fences. Use only information "
+        "found in the PDF. If information is missing, write 'Not stated'. Do "
+        "not infer numbers that are not present. Do not produce fake traction, "
+        "revenue, valuation, customers, or funding ask. Pick the most natural "
+        "shape for the answer:\n"
+        "- 'stat'  → { value, delta?, caption? } for a single investment metric\n"
+        "- 'trend' → [{label, value}, ...] for traction or growth over time\n"
+        "- 'share' → [{label, value}, ...] for market / segment breakdowns\n"
+        "- 'table' → { columns:[{key,label}], rows:[{...}] } for risks, diligence, missing info\n"
+        "- 'text'  → string for partner-memo or qualitative analysis\n"
     )
     user = f"""\
-Question: {question}
+Investor question: {question}
 
-PDF text (truncated):
+Pitch deck PDF text (truncated):
 \"\"\"
 {pdf_text[:30000]}
 \"\"\"
@@ -168,10 +207,20 @@ PDF text (truncated):
 Return JSON shaped like:
 {{
   "shape_hint": "stat|trend|share|table|text",
-  "title": "...",
-  "summary": "...",
+  "title": "Investor-grade title",
+  "summary": "Neutral summary using only deck evidence; use Not stated for missing facts",
   "data": <payload above>
 }}
+
+Useful investor analyses include:
+- investment committee memo
+- top investor risks
+- missing deck information
+- due diligence questions by priority
+- traction versus market opportunity
+- fundability assessment
+- weakest slide from an investor perspective
+- VC partner memo
 """
     out = _extractor().invoke([("system", sys), ("user", user)])
     raw = _strip_to_json(out.content if isinstance(out.content, str) else str(out.content))
@@ -182,8 +231,8 @@ Return JSON shaped like:
         return json.dumps(
             {
                 "shape_hint": "text",
-                "title": "Answer",
+                "title": "Pitch deck analysis",
                 "summary": "Could not produce structured output.",
-                "data": "",
+                "data": "Not stated",
             }
         )

@@ -9,16 +9,16 @@
    src/app/(pdf)/pdf-analyst.css. `pnpm theme:reset` reverts both.
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .a2ui-surface {
-  --background: #fafafc;
-  --foreground: #010507;
-  --card: #ffffff;
-  --primary: #010507;
+  --background: #f7f5ef;
+  --foreground: #111814;
+  --card: #fffdf8;
+  --primary: #1d3b2f;
   --primary-foreground: #ffffff;
-  --border: #dbdbe5;
-  --input: #dbdbe5;
-  --muted: #f0f0f4;
-  --muted-foreground: #57575b;
-  --accent: #bec2ff;
+  --border: #ddd4bf;
+  --input: #ddd4bf;
+  --muted: #f2eee3;
+  --muted-foreground: #526057;
+  --accent: #c6a15b;
   --accent-foreground: #010507;
   --radius: 14px;
 

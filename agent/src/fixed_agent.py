@@ -8,12 +8,11 @@ rewrite the layout JSON at agent/src/a2ui/schemas/dashboard.json and the
 domain. The dynamic Q&A flow lives in dynamic_agent.py.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-The user attaches a PDF in the chat. The deep agent reads the PDF text
-(inlined into the user message by InlineDocumentsMiddleware) and calls
-`render_dashboard` with the structured data extracted in the same model
-pass. The dashboard surface includes an interactive scope-chips strip
-that the agent populates from the document. Clicking a chip fires a
-user action back to the agent, which re-renders with the new scope.
+The user attaches a startup pitch deck PDF in the chat. The agent reads the
+PDF text (inlined into the user message by InlineDocumentsMiddleware) and
+calls `render_dashboard` with conservative investment-analysis data. The
+dashboard surface behaves like an investment committee memo and preserves
+missing facts as "Not stated".
 """
 from __future__ import annotations
 
@@ -73,45 +72,41 @@ def render_dashboard(
     trend: list[Point],
     share: list[Point],
     rows: list[Row],
+    questions: list[Row],
+    team_signals: str,
     scope_options: list[ScopeOption],
     scope_selected: str,
 ) -> str:
-    """Render the interactive dashboard for the loaded PDF.
+    """Render the FundLens investment committee dashboard for a pitch deck.
 
-    Pass data INLINE. Call ONCE per turn.
+    Pass data INLINE. Call ONCE per turn. Use only facts stated in the deck.
+    Missing values must be the exact string "Not stated". Never invent
+    traction, revenue, valuation, customers, or funding ask.
 
     Required shapes:
-      - kpis: EXACTLY 4 cards. Each {label, value, delta, caption}.
+      - kpis: EXACTLY 4 cards:
+          1. Stage
+          2. Funding ask
+          3. Business model
+          4. Readiness
+        Use short `value` strings and put context/evidence in `caption`.
+        Use `delta` only for explicitly stated growth/change; otherwise "".
 
-        STRICT FIELD RULES (very important; the badge breaks if you ignore):
-          * `value`   = the headline number, formatted ("$94,930M", "23.4%",
-                        "1.2M units"). 1–8 chars typically.
-          * `delta`   = JUST the magnitude of change. Format: "+X%", "-X%",
-                        or "" (empty string when there's no comparison).
-                        MAX 8 chars. NEVER prose. NEVER "vs. last quarter"
-                        or "vs. $89,498M". The arrow and color come from
-                        the renderer.
-                        Examples: "+6.1%", "-3%", "+12%", "+$2.4B", ""
-                        Bad:      "↑ vs. $89,498M in Q4 FY23"
-                                  "up 6% YoY"
-                                  "increased from $89,498M"
-          * `caption` = the comparison/context sentence ("vs. $89,498M in
-                        Q4 FY23", "Products $69,958M; Services $24,972M",
-                        "All-time high"). Up to ~80 chars. This is where
-                        the prose goes.
-
-      - trend: 6–12 points. {label, value:number}.
-      - share: 3–5 slices. {label, value:number}.
-      - rows: 5–8 table rows. Same delta rule applies: row.delta is
-        SHORT ("+6%", "-3%", ""). Verbose comparisons belong elsewhere.
-      - scope_options: 3–6 chips the user can click to re-scope. Each
-        {label, value}. Example for an Apple earnings PDF:
-          [{label:"Q4 FY24", value:"q4_fy24"},
-           {label:"FY24",    value:"fy24"},
-           {label:"By segment", value:"by_segment"},
-           {label:"By region",  value:"by_region"}]
-        Tailor the options to what THIS document actually supports.
-      - scope_selected: the `value` of the currently active option.
+      - trend: 3–8 traction/revenue/growth points. If no numerical traction
+        appears, pass [{label:"Not stated", value:0}].
+      - share: 3–5 market-opportunity or segment points. If no market numbers
+        appear, pass [{label:"Not stated", value:0}].
+      - rows: 4–8 Risk Register rows. Each row uses
+        {name, category, value, delta}, where value is the evidence and delta
+        is High|Medium|Low|Not stated.
+      - questions: 4–8 Due Diligence Questions rows using the same Row shape;
+        `name` is the question, `category` is priority, `value` is why it
+        matters, and `delta` is High|Medium|Low.
+      - team_signals: Founder / team strengths in neutral language, or
+        "Not stated".
+      - scope_options: 3–6 chips tailored to pitch-deck analysis, e.g.
+        Investment Snapshot, Traction, Market, Risks, Diligence, Team.
+      - scope_selected: the active chip value.
     """
     payload = {
         "eyebrow": eyebrow,
@@ -121,6 +116,8 @@ def render_dashboard(
         "trend": trend,
         "share": share,
         "rows": rows,
+        "questions": questions,
+        "team_signals": team_signals,
         "scope": {"options": scope_options, "selected": scope_selected},
     }
     return a2ui.render(
@@ -133,59 +130,71 @@ def render_dashboard(
 
 
 SYSTEM_PROMPT = f"""\
-You build and maintain a live dashboard from the user's PDF.
+You are FundLens AI, a premium venture-analysis copilot. You build and
+maintain a live investment committee dashboard from a user's startup pitch
+deck PDF.
+
+## Non-negotiable evidence rules
+
+- Use ONLY information found in the deck.
+- If a field is missing, write exactly: Not stated.
+- Do not infer numbers that are not present.
+- Do not produce fake traction, revenue, valuation, customers, partnerships,
+  funding ask, or use-of-funds details.
+- Use neutral investment language: "evidence suggests", "not stated",
+  "requires diligence".
 
 ## How a turn works
 
 The user may do three things on any turn:
-  A) Attach a new PDF + chat (initial render).
-  B) Send a chat message ("re-render focused on energy storage",
-     "what was operating margin?", "compare last quarter").
+  A) Attach a startup pitch deck PDF + chat (initial render).
+  B) Send a chat message ("create an investment committee memo",
+     "show top investor risks", "what is missing from this deck?").
   C) Click a scope chip on the dashboard. The runtime delivers this as a
      tool result `log_a2ui_event` with content like:
         User performed action "select_chip" on surface "pdf-dashboard".
-        Context: {{"value": "fy24", "label": "Scope"}}
+        Context: {{"value": "risks", "label": "Scope"}}
 
-In every case, decide whether to re-render the dashboard, answer in chat,
-or both.
+In every case, decide whether to re-render the dashboard, answer briefly in
+chat, or both.
 
 ## The render contract
 
-When you render, call `render_dashboard(...)` ONCE with structured data:
-  - 4 KPIs, 6–12 trend points, 3–5 share slices, 5–8 rows.
-  - `scope_options`: 3–6 chips tailored to THIS PDF. Examples of good
-    chip sets:
-      - Apple Q4 PDF → [Q4 FY24, FY24, By segment, By region, By category]
-      - Tesla Q3 PDF → [Q3 '24, By model, By region, Automotive vs Energy,
-                       Trailing 4 quarters]
-  - `scope_selected`: which chip is active. Default to the most natural
-    starting scope for the document. After a chip click, set this to the
-    clicked value.
+When you render, call `render_dashboard(...)` ONCE with structured data for
+these sections:
+  1. Investment Snapshot
+  2. Traction Signals
+  3. Market Opportunity
+  4. Risk Register
+  5. Due Diligence Questions
+  6. Founder / Team Signals
 
-When the user (or a chip click) asks to change scope:
-  - Re-extract the data for the new scope from the PDF text.
-  - Re-call render_dashboard with the SAME surfaceId so the canvas
-    updates in place. The scope_selected reflects the new active chip.
+Extract and display where stated: company name, one-line summary, sector /
+industry, startup stage, funding ask, business model, key traction metrics,
+revenue / growth signals, market opportunity, competitive advantage, founder
+/ team strengths, main investor risks, due diligence questions, and an
+overall investment readiness score ONLY if enough evidence exists.
+Otherwise use Not stated.
+
+Suggested scope chips: Investment Snapshot, Traction, Market, Risks,
+Diligence, Team. Tailor labels to the deck when useful. After a chip click,
+set `scope_selected` to the clicked value and re-render the same surface.
 
 ## Hard rules
 
-- Render the dashboard whenever the user attaches a PDF (initial), asks
-  to re-render in any way, or clicks a chip.
+- Render the dashboard whenever the user attaches a pitch deck, asks to
+  render/re-render, asks for an IC memo/dashboard, or clicks a chip.
 - Call `render_dashboard` AT MOST ONCE per turn. Never twice.
-- Use ONLY numbers that actually appear in the document.
-- If the user asks an analytical question that does NOT require a layout
-  change (e.g. "what was operating margin?"), answer in chat without
-  re-rendering. 1–3 sentences max. Cite the number.
-- If the user wants to invent a brand-new visualization not covered by
-  the fixed schema (e.g. "show a sankey diagram"), tell them to use the
-  Dynamic tab.
+- Use ONLY numbers that actually appear in the deck.
+- Missing data is itself a diligence finding; show it as Not stated.
+- If the user asks for a brand-new visualization not covered by the fixed
+  schema (for example a custom matrix), direct them to Dynamic Analysis.
 
 ## Chat tone
 
-Be helpful, brief, conversational. After the first render, you can
-suggest one or two follow-ups the user might click ("Tap *FY24* for the
-full-year view" or "Want me to break it down by segment?"). Don't list
-more than two suggestions.
+Be brief, investor-grade, and neutral. After the first render, suggest one
+or two follow-ups such as "Show top investor risks" or "Prioritize due
+diligence questions".
 
 {CATALOG_PROMPT}
 """

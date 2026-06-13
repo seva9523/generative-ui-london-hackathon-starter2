@@ -6,24 +6,24 @@ export default function Home() {
     <>
       <SiteNav active="home" />
       <PageHeader
-        eyebrow="CopilotKit × A2UI v0.9"
+        eyebrow="FundLens AI · Track 2 A2UI"
         meta={
           <span className="pill">
-            <span className="dot" /> reference build
+            <span className="dot" /> investment analysis demo
           </span>
         }
         title={
           <>
-            Agents that compose UI from your <br className="hidden md:inline" />
+            Turn pitch decks into <br className="hidden md:inline" />
             <span
               className="bg-clip-text text-transparent"
               style={{ backgroundImage: "var(--brand-gradient)" }}
             >
-              own design system.
+              investment-ready dashboards.
             </span>
           </>
         }
-        subtitle="Drop a PDF. Watch one agent paint a fixed dashboard from a hand-authored layout, and another agent invent the UI for any follow-up question. Both using the same 21-component catalog."
+        subtitle="Upload a startup deck and let the agent generate KPIs, traction analysis, risks, market signals, and investor questions as live UI."
       />
 
       <main className="flex-1 max-w-[1320px] mx-auto px-6 py-12 w-full">
@@ -31,26 +31,26 @@ export default function Home() {
           <ModeCard
             href="/fixed"
             badge="01 · FIXED SCHEMA"
-            title="Same layout, your data"
-            blurb="You author the dashboard once. The agent only fills in the numbers. Fast, predictable, brand-locked."
+            title="Investment committee dashboard"
+            blurb="A fixed A2UI layout turns a pitch deck into an investor memo: snapshot, traction, market, risks, diligence, and team signals."
             bullets={[
-              "One JSON file is the dashboard layout",
-              "Agent extracts KPIs, trend, share, table rows from the PDF",
-              "Surface streams in instantly. No second LLM call to render",
+              "One JSON layout anchors the IC memo view",
+              "Agent extracts pitch signals and preserves missing data as “Not stated”",
+              "Premium, predictable dashboard for judge-ready demos",
             ]}
-            cta="Open the fixed demo"
+            cta="Open the fixed dashboard"
           />
           <ModeCard
             href="/dynamic"
             badge="02 · DYNAMIC SCHEMA"
-            title="Agent picks the shape"
-            blurb="No pre-written layout. The agent answers your question, then a second LLM pass invents the UI from the catalog."
+            title="Dynamic investor analysis"
+            blurb="Ask VC-style follow-ups and the agent composes the right UI from the catalog for each investment question."
             bullets={[
-              "Pick any of the 21 catalog components, in any combination",
-              "Stat for single numbers · LineChart for trends · DataTable for lists",
-              "Same brand tokens. The agent never sees CSS",
+              "Create partner memos, risk charts, diligence tables, and missing-info lists",
+              "Bar charts for risks · Tables for diligence · Callouts for verdicts",
+              "Same FundLens design tokens. The agent never sees CSS",
             ]}
-            cta="Open the dynamic demo"
+            cta="Open dynamic analysis"
           />
         </div>
 
@@ -58,10 +58,10 @@ export default function Home() {
           <div className="flex items-end justify-between mb-4">
             <div>
               <span className="mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted-2)]">
-                The design system
+                The FundLens UI system
               </span>
               <h2 className="text-[22px] font-semibold tracking-tight mt-1">
-                21 components, one catalog
+                21 components, one investor-grade catalog
               </h2>
             </div>
             <Link
@@ -108,7 +108,7 @@ export default function Home() {
       <footer className="border-t border-[var(--line)] py-6 mt-10">
         <div className="max-w-[1320px] mx-auto px-6 text-xs text-[var(--muted)] flex items-center justify-between">
           <span>
-            Drop your design tokens into{" "}
+            FundLens keeps A2UI tokens in{" "}
             <code className="mono px-1.5 py-0.5 rounded bg-[var(--surface-soft)] border border-[var(--line)] text-[11px]">
               src/a2ui/theme.css
             </code>{" "}

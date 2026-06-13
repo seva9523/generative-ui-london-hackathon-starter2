@@ -79,9 +79,9 @@ export default function FixedPage() {
                 }}
                 labels={{
                   chatInputPlaceholder:
-                    "Attach a PDF (📎), then ask to render the dashboard…",
+                    "Attach a pitch deck (📎), then ask for an IC dashboard…",
                   welcomeMessageText:
-                    "Attach a PDF using the 📎 button, then ask: “Render the dashboard.”",
+                    "Attach a startup pitch deck, then ask: “Create an investment committee dashboard.”",
                 }}
               />
             </div>
@@ -92,11 +92,11 @@ export default function FixedPage() {
             channel={AGENT_ID}
             emptyState={
               <CanvasEmptyState
-                title="Canvas is empty"
-                subtitle="Attach a PDF in the chat (📎 in the input toolbar) and ask the agent to render the dashboard. The rendered A2UI surface will fill this canvas."
+                title="Investment canvas is empty"
+                subtitle="Attach a startup pitch deck in the chat (📎) and ask FundLens AI to create the investment committee dashboard."
                 hint={
                   <span className="mono text-[11px] uppercase tracking-[0.14em] text-[var(--ink)]">
-                    try: “Render the dashboard.”
+                    try: “Create an investment committee memo.”
                   </span>
                 }
               />
