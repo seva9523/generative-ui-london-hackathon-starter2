@@ -38,13 +38,13 @@ export default function DynamicPage() {
             <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--lilac)] opacity-75 animate-ping" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--lilac)]" />
           </span>
-          <span>Composing a surface…</span>
+          <span>Composing investor UI…</span>
         </div>
       );
     },
   });
 
-  // query_pdf: render nothing, ever. The "Composing a surface…" pill
+  // query_pdf: render nothing, ever. The "Composing investor UI…" pill
   // from generate_a2ui is the only chat signal we want. We override the
   // default tool card here (instead of leaving it) for two reasons:
   // 1) the default tool card keeps args/result in the DOM and our args
@@ -116,9 +116,9 @@ export default function DynamicPage() {
                     console.warn("[pdf upload failed]", err),
                 }}
                 labels={{
-                  chatInputPlaceholder: "Attach a PDF (📎), then ask anything…",
+                  chatInputPlaceholder: "Attach a pitch deck (📎), then ask an investor question…",
                   welcomeMessageText:
-                    "Attach a PDF using the 📎 button, then ask any question.",
+                    "Attach a startup pitch deck, then ask: “Show top investor risks.”",
                 }}
               />
             </div>
@@ -129,11 +129,11 @@ export default function DynamicPage() {
             channel={AGENT_ID}
             emptyState={
               <CanvasEmptyState
-                title="Canvas is empty"
-                subtitle="Attach a PDF in the chat and ask anything. The agent will compose a UI surface using the catalog and render it here."
+                title="Dynamic analysis canvas is empty"
+                subtitle="Attach a pitch deck and ask an investor-style question. The agent will compose live UI for risks, diligence, market signals, or partner memos."
                 hint={
                   <span className="mono text-[11px] uppercase tracking-[0.14em] text-[var(--ink)]">
-                    try: “Show me the revenue trend.”
+                    try: “What is missing from this deck?”
                   </span>
                 }
               />

@@ -592,11 +592,11 @@ export default function CatalogPage() {
         }
         title={
           <>
-            Every component the agent <br className="hidden md:inline" />
-            <span className="text-[var(--muted)]">is allowed to draw.</span>
+            Every component FundLens AI <br className="hidden md:inline" />
+            <span className="text-[var(--muted)]">can draw for investors.</span>
           </>
         }
-        subtitle="One catalog, one set of React renderers, one set of brand tokens. Both demos compose from this. The fixed dashboard via a pre-authored layout, the dynamic Q&A by inventing one per question."
+        subtitle="One catalog, one renderer set, one premium venture-analysis theme. Fixed dashboards and dynamic investor follow-ups both compose from these components."
       />
 
       <main className="flex-1 max-w-[1320px] mx-auto px-6 py-8 w-full">

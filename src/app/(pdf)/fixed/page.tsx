@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CopilotChat, useAgent } from "@copilotkit/react-core/v2";
+import { z } from "zod";
+import {
+  CopilotChat,
+  useAgent,
+  useRenderTool,
+} from "@copilotkit/react-core/v2";
 import { SiteNav } from "@/components/pdf-analyst/Brand";
 import { SurfaceCanvas, CanvasEmptyState } from "@/components/pdf-analyst/SurfaceCanvas";
 import { FilteredUserMessage } from "@/components/pdf-analyst/FilteredUserMessage";
@@ -18,6 +23,26 @@ export default function FixedPage() {
     pages: number;
     chars: number;
   } | null>(null);
+
+  // render_dashboard returns A2UI operations for the canvas. Register the
+  // tool so CopilotKit does not render it as an unknown chat message while
+  // the surface bus paints the dashboard on the right.
+  useRenderTool({
+    name: "render_dashboard",
+    parameters: z.any(),
+    render: ({ status }) => {
+      if (status === "complete") return <></>;
+      return (
+        <div className="surface-soft px-3 py-2 my-1 flex items-center gap-3 text-[13px] text-[var(--ink-2)]">
+          <span className="relative inline-flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--mint)] opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--mint)]" />
+          </span>
+          <span>Rendering investment dashboard…</span>
+        </div>
+      );
+    },
+  });
 
   return (
     <div className="h-screen flex flex-col bg-[var(--bg)]">
@@ -79,9 +104,9 @@ export default function FixedPage() {
                 }}
                 labels={{
                   chatInputPlaceholder:
-                    "Attach a PDF (📎), then ask to render the dashboard…",
+                    "Attach a pitch deck (📎), then ask for an IC dashboard…",
                   welcomeMessageText:
-                    "Attach a PDF using the 📎 button, then ask: “Render the dashboard.”",
+                    "Attach a startup pitch deck, then ask: “Create an investment committee dashboard.”",
                 }}
               />
             </div>
@@ -92,11 +117,11 @@ export default function FixedPage() {
             channel={AGENT_ID}
             emptyState={
               <CanvasEmptyState
-                title="Canvas is empty"
-                subtitle="Attach a PDF in the chat (📎 in the input toolbar) and ask the agent to render the dashboard. The rendered A2UI surface will fill this canvas."
+                title="Investment canvas is empty"
+                subtitle="Attach a startup pitch deck in the chat (📎) and ask FundLens AI to create the investment committee dashboard."
                 hint={
                   <span className="mono text-[11px] uppercase tracking-[0.14em] text-[var(--ink)]">
-                    try: “Render the dashboard.”
+                    try: “Create an investment committee memo.”
                   </span>
                 }
               />

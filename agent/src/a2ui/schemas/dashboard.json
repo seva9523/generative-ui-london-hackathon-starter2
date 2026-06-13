@@ -4,17 +4,26 @@
     "component": "Stack",
     "gap": "lg",
     "children": [
-      "header-card",
+      "snapshot-section",
       "scope-chips",
       "kpi-grid",
-      "charts-grid",
-      "table-section"
+      "signals-grid",
+      "risk-section",
+      "diligence-section",
+      "team-section"
     ]
   },
-
+  {
+    "id": "snapshot-section",
+    "component": "Section",
+    "eyebrow": "FUNDLENS AI",
+    "title": "Investment Snapshot",
+    "child": "header-card"
+  },
   {
     "id": "header-card",
     "component": "Card",
+    "tone": "mint",
     "child": "header-stack"
   },
   {
@@ -40,15 +49,13 @@
     "tone": "muted",
     "text": { "path": "/subtitle" }
   },
-
   {
     "id": "scope-chips",
     "component": "ChoiceChips",
-    "label": "Scope",
+    "label": "Investment view",
     "value": { "path": "/scope/selected" },
     "options": { "path": "/scope/options" }
   },
-
   {
     "id": "kpi-grid",
     "component": "Grid",
@@ -62,7 +69,7 @@
     "label": { "path": "/kpis/0/label" },
     "value": { "path": "/kpis/0/value" },
     "delta": { "path": "/kpis/0/delta" },
-    "deltaTone": "positive",
+    "deltaTone": "neutral",
     "caption": { "path": "/kpis/0/caption" }
   },
   {
@@ -80,7 +87,7 @@
     "label": { "path": "/kpis/2/label" },
     "value": { "path": "/kpis/2/value" },
     "delta": { "path": "/kpis/2/delta" },
-    "deltaTone": "positive",
+    "deltaTone": "neutral",
     "caption": { "path": "/kpis/2/caption" }
   },
   {
@@ -89,75 +96,116 @@
     "label": { "path": "/kpis/3/label" },
     "value": { "path": "/kpis/3/value" },
     "delta": { "path": "/kpis/3/delta" },
-    "deltaTone": "negative",
+    "deltaTone": "neutral",
     "caption": { "path": "/kpis/3/caption" }
   },
-
   {
-    "id": "charts-grid",
+    "id": "signals-grid",
     "component": "Grid",
     "columns": 2,
     "gap": "md",
-    "children": ["trend-section", "share-section"]
+    "children": ["traction-section", "market-section"]
   },
   {
-    "id": "trend-section",
+    "id": "traction-section",
     "component": "Section",
-    "eyebrow": "TREND",
-    "title": "Monthly performance",
-    "child": "trend-card"
+    "eyebrow": "TRACTION SIGNALS",
+    "title": "Revenue / Growth Evidence",
+    "child": "traction-card"
   },
   {
-    "id": "trend-card",
+    "id": "traction-card",
     "component": "Card",
-    "child": "trend-chart"
+    "child": "traction-chart"
   },
   {
-    "id": "trend-chart",
+    "id": "traction-chart",
     "component": "LineChart",
     "height": 240,
     "data": { "path": "/trend" }
   },
   {
-    "id": "share-section",
+    "id": "market-section",
     "component": "Section",
-    "eyebrow": "SHARE OF TOTAL",
-    "title": "Breakdown",
-    "child": "share-card"
+    "eyebrow": "MARKET OPPORTUNITY",
+    "title": "Market / Segment Signals",
+    "child": "market-card"
   },
   {
-    "id": "share-card",
+    "id": "market-card",
     "component": "Card",
-    "child": "share-chart"
+    "child": "market-chart"
   },
   {
-    "id": "share-chart",
+    "id": "market-chart",
     "component": "DonutChart",
     "height": 240,
     "data": { "path": "/share" }
   },
-
   {
-    "id": "table-section",
+    "id": "risk-section",
     "component": "Section",
-    "eyebrow": "DETAIL",
-    "title": "Top rows",
-    "child": "table-card"
+    "eyebrow": "RISK REGISTER",
+    "title": "Main Investor Risks",
+    "child": "risk-card"
   },
   {
-    "id": "table-card",
+    "id": "risk-card",
     "component": "Card",
-    "child": "table"
+    "child": "risk-table"
   },
   {
-    "id": "table",
+    "id": "risk-table",
     "component": "DataTable",
     "columns": [
-      { "key": "name", "label": "Name", "align": "left" },
-      { "key": "category", "label": "Category", "align": "left" },
-      { "key": "value", "label": "Value", "align": "right" },
-      { "key": "delta", "label": "Δ", "align": "right" }
+      { "key": "name", "label": "Risk", "align": "left" },
+      { "key": "category", "label": "Area", "align": "left" },
+      { "key": "value", "label": "Evidence", "align": "left" },
+      { "key": "delta", "label": "Priority", "align": "right" }
     ],
     "rows": { "path": "/rows" }
+  },
+  {
+    "id": "diligence-section",
+    "component": "Section",
+    "eyebrow": "DUE DILIGENCE QUESTIONS",
+    "title": "Questions for the Founder",
+    "child": "diligence-card"
+  },
+  {
+    "id": "diligence-card",
+    "component": "Card",
+    "child": "diligence-table"
+  },
+  {
+    "id": "diligence-table",
+    "component": "DataTable",
+    "columns": [
+      { "key": "name", "label": "Question", "align": "left" },
+      { "key": "category", "label": "Priority", "align": "left" },
+      { "key": "value", "label": "Why it matters", "align": "left" },
+      { "key": "delta", "label": "Urgency", "align": "right" }
+    ],
+    "rows": { "path": "/questions" }
+  },
+  {
+    "id": "team-section",
+    "component": "Section",
+    "eyebrow": "FOUNDER / TEAM SIGNALS",
+    "title": "Team Strengths",
+    "child": "team-card"
+  },
+  {
+    "id": "team-card",
+    "component": "Card",
+    "tone": "lilac",
+    "child": "team-callout"
+  },
+  {
+    "id": "team-callout",
+    "component": "Callout",
+    "tone": "neutral",
+    "title": "Team readout",
+    "body": { "path": "/team_signals" }
   }
 ]

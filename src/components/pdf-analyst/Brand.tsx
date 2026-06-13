@@ -14,7 +14,7 @@ export function Logo({ size = 22 }: { size?: number }) {
   return (
     <Image
       src="/brand/logo-full.svg"
-      alt="CopilotKit"
+      alt="FundLens AI"
       width={size * 5}
       height={size}
       priority
@@ -30,9 +30,9 @@ export function SiteNav({
 }) {
   const links: Array<{ href: string; label: string; key: typeof active }> = [
     { href: "/", label: "Overview", key: "home" },
-    { href: "/fixed", label: "Fixed schema", key: "fixed" },
-    { href: "/dynamic", label: "Dynamic schema", key: "dynamic" },
-    { href: "/catalog", label: "Catalog", key: "catalog" },
+    { href: "/fixed", label: "Fixed Dashboard", key: "fixed" },
+    { href: "/dynamic", label: "Dynamic Analysis", key: "dynamic" },
+    { href: "/catalog", label: "Component Catalog", key: "catalog" },
   ];
   return (
     <header className="shrink-0 border-b border-[var(--line)] bg-[var(--surface)]">
@@ -41,7 +41,7 @@ export function SiteNav({
           <Logo size={22} />
           <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-[var(--line)] bg-[var(--surface-soft)] text-[10.5px] uppercase tracking-[0.12em] mono text-[var(--muted)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--lilac)]" />
-            A2UI
+            FundLens AI
           </span>
         </Link>
         <nav className="flex items-center gap-1">
